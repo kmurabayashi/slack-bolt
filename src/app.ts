@@ -9,24 +9,14 @@ const awsLambdaReceiver = new AwsLambdaReceiver({
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
-  // signingSecret: process.env.SLACK_SIGNING_SECRET,
   logLevel: LogLevel.DEBUG,
   receiver: awsLambdaReceiver,
-  // `processBeforeResponse` オプションは、あらゆる FaaS 環境で必須です。
-  // このオプションにより、Bolt フレームワークが `ack()` などでリクエストへの応答を返す前に
-  // `app.message` などのメソッドが Slack からのリクエストを処理できるようになります。FaaS では
-  // 応答を返した後にハンドラーがただちに終了してしまうため、このオプションの指定が重要になります。
   processBeforeResponse: true
 });
 
-// Listens to incoming messages that contain "hello"
+// 動作確認用
 app.message('ping', async ({ message, say }) => {
-
-  // Filter out message events with subtypes (see https://api.slack.com/events/message)
-  // Is there a way to do this in listener middleware with current type system?
   if (!isGenericMessageEvent(message)) return;
-  // say() sends a message to the channel where the event was triggered
-
   await say('pong');
 });
 
@@ -34,8 +24,8 @@ app.message('ping', async ({ message, say }) => {
 app.event('channel_created', async ({ event, client }) => {
   try {
     if(event.channel.name.startsWith('rec')) return
-    const result = await client.chat.postMessage({
-      channel: 'C0159613138',
+    await client.chat.postMessage({
+      channel: process.env.NOTIFY_CREATE_CHANNEL_ID || '',
       text: ` <#${event.channel.id}> が<@${event.channel.creator}>によって作成されました。`
     });
   }
@@ -44,8 +34,25 @@ app.event('channel_created', async ({ event, client }) => {
   }
 });
 
+// 誰かをアサインする
+app.command('/random_assign', async ({ command, ack, client }) => {
+  // コマンドリクエストを確認
+  await ack();
+  const candidate = ['U0107TNMKLG', 'U01JLPE4MM3', 'U01BA836AP5', 'U012R8TEQ7K', 'UMJL2A5UN']
+  let target = ''
+  if(command.text === 'all') {
+    target = candidate[Math.floor(Math.random() * candidate.length)]
+  } else {
+    const newCandidate = candidate.filter(n => n !== command.user_id);
+    target = newCandidate[Math.floor(Math.random() * newCandidate.length)]
+  }
+  await client.chat.postMessage({
+    channel: process.env.NOTIFY_CREATE_CHANNEL_ID || '',
+    text: `<@${target}>さんお願いします`
+  });
+});
 
-// Lambda 関数のイベントを処理します
+// Lambda 関数のイベントを処理
 module.exports.handler = async (event: any, context: any, callback: any) => {
   const handler = await awsLambdaReceiver.start();
   return handler(event, context, callback);
