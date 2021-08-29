@@ -4,6 +4,7 @@
   "description": "Bolt getting started app in TypeScript",
   "main": "dist/app.js",
   "scripts": {
+    "dev": "tsc -p . && sls offline --noPrependStageInUrl",
     "build": "tsc -p .",
     "build:watch": "tsc -w -p .",
     "start": "npm run build && node dist/app.js"

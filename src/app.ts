@@ -4,7 +4,7 @@ import { isGenericMessageEvent } from './utils/helpers'
 
 // カスタムのレシーバーを初期化します
 const awsLambdaReceiver = new AwsLambdaReceiver({
-  signingSecret: process.env.SLACK_SIGNING_SECRET || 'a',
+  signingSecret: process.env.SLACK_SIGNING_SECRET || '',
 });
 
 const app = new App({
@@ -20,49 +20,24 @@ const app = new App({
 });
 
 // Listens to incoming messages that contain "hello"
-app.message('hello', async ({ message, say }) => {
+app.message('ping', async ({ message, say }) => {
 
   // Filter out message events with subtypes (see https://api.slack.com/events/message)
   // Is there a way to do this in listener middleware with current type system?
   if (!isGenericMessageEvent(message)) return;
   // say() sends a message to the channel where the event was triggered
 
-  await say({
-    blocks: [
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `Hey there <@${message.user}>!`
-        },
-        accessory: {
-          type: 'button',
-          text: {
-            type: 'plain_text',
-            text: 'Click Me'
-          },
-          action_id: 'button_click'
-        }
-      }
-    ],
-    text: `Hey there <@${message.user}>!`
-  });
-});
-
-app.action('button_click', async ({ body, ack, say, client}) => {
-  // Acknowledge the action
-  await ack();
-  await say(`<@${body.user.id}> clicked the button`);
+  await say('pong');
 });
 
 // チャンネル作られたら
 app.event('channel_created', async ({ event, client }) => {
   try {
+    if(event.channel.name.startsWith('rec')) return
     const result = await client.chat.postMessage({
-      channel: '',
-      text: `Welcome to the team,${event.channel.name} 🎉 You can introduce yourself in this channel.`
+      channel: 'C0159613138',
+      text: ` <#${event.channel.id}> が<@${event.channel.creator}>によって作成されました。`
     });
-    console.log(result);
   }
   catch (error) {
     console.error(error);
