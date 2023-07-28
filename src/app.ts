@@ -38,7 +38,7 @@ app.event('channel_created', async ({ event, client }) => {
 app.command('/random_assign', async ({ command, ack, client }) => {
   // コマンドリクエストを確認
   await ack();
-  const candidate = ['U0107TNMKLG', 'U01JLPE4MM3', 'U01BA836AP5', 'U012R8TEQ7K', 'UMJL2A5UN']
+  const candidate = []
   let target = ''
   if(command.text === 'all') {
     target = candidate[Math.floor(Math.random() * candidate.length)]
